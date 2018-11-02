@@ -97,11 +97,11 @@ class LevelSandbox {
 module.exports.LevelSandbox = LevelSandbox;
 
 
-const ls = new LevelSandbox();
-
-(function theLoop(i) {
-  setTimeout(function() {
-    ls.addDataToLevelDB('Testing data');
-    if (--i) theLoop(i);
-  }, 100);
-})(10);
+// const ls = new LevelSandbox();
+//
+// (function theLoop(i) {
+//   setTimeout(function() {
+//     ls.addDataToLevelDB('Testing data');
+//     if (--i) theLoop(i);
+//   }, 100);
+// })(10);
