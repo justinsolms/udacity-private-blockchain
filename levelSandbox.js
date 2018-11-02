@@ -70,9 +70,12 @@ class LevelSandbox {
   }
 
   addDataToLevelDB(value) {
+    let self = this;
+
     return new Promise(function(resolve, reject) {
+
       let i = 0;
-      this.db.createReadStream()
+      self.db.createReadStream()
         .on('data', function(data) {
           i++;
         })
@@ -81,7 +84,7 @@ class LevelSandbox {
         })
         .on('close', function() {
           console.log('Block #' + i);
-          this.addLevelDBData(i, value);
+          self.addLevelDBData(i, value);
           // Resolve with the added value
           resolve(value)
         });
@@ -92,3 +95,13 @@ class LevelSandbox {
 
 // Export the class
 module.exports.LevelSandbox = LevelSandbox;
+
+
+const ls = new LevelSandbox();
+
+(function theLoop(i) {
+  setTimeout(function() {
+    ls.addDataToLevelDB('Testing data');
+    if (--i) theLoop(i);
+  }, 100);
+})(10);
