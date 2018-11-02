@@ -66,12 +66,26 @@ class LevelSandbox {
           //resolve with the count value
           resolve(count)
         });
-
-
-
     });
+  }
 
-
+  addDataToLevelDB(value) {
+    return new Promise(function(resolve, reject) {
+      let i = 0;
+      this.db.createReadStream()
+        .on('data', function(data) {
+          i++;
+        })
+        .on('error', function(err) {
+          reject('Unable to read data stream!' + err);
+        })
+        .on('close', function() {
+          console.log('Block #' + i);
+          this.addLevelDBData(i, value);
+          // Resolve with the added value
+          resolve(value)
+        });
+    });
   }
 
 }
