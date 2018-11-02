@@ -1,0 +1,4 @@
+chaindata/
+node_modules/
+package.json
+testnet_block_1325438.json
