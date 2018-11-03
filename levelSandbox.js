@@ -14,7 +14,10 @@ class LevelSandbox {
 
   // Get data from levelDB with key (Promise)
   getLevelDBData(key) {
-    let self = this; // because we are returning a promise we will need this to be able to reference 'this' inside the Promise constructor
+    // because we are returning a promise we will need this to be able to
+    // reference this outside 'this' *inside* the Promise constructor
+    let self = this;
+
     return new Promise(function(resolve, reject) {
       self.db.get(key, (err, value) => {
         if (err) {
@@ -33,60 +36,76 @@ class LevelSandbox {
 
   // Add data to levelDB with key and value (Promise)
   addLevelDBData(key, value) {
+    // because we are returning a promise we will need this to be able to
+    // reference this outside 'this' *inside* the Promise constructor
     let self = this;
+
     return new Promise(function(resolve, reject) {
-      self.db.put(key, value, function(err) {
-        if (err) {
-          console.log('Block ' + key + ' submission failed', err);
-          reject(err);
-        }
-        resolve(value);
-      });
+      // self.db.put(key, value, function(err) {
+      //   if (err) {
+      //     console.log('Block ' + key + ' submission failed', err);
+      //     reject(err);
+      //   }
+      //   resolve(value);
+      // });
+      self.db.put(key, value)
+        .then(() => {resolve(value)})
+        .catch((err) => {
+          reject('Block ' + key + ' submission failed : ' + err);
+        })
+    });
+  }
+
+  addDataToLevelDB(value) {
+    // because we are returning a promise we will need this to be able to
+    // reference this outside 'this' *inside* the Promise constructor
+    let self = this;
+
+    return new Promise(function(resolve, reject) {
+      // let i = 0;
+      // self.db.createReadStream()
+      //   .on('data', function(data) {
+      //     i++;
+      //   })
+      //   .on('error', function(err) {
+      //     reject('Unable to read data stream!' + err);
+      //   })
+      //   .on('close', function() {
+      //     self.addLevelDBData(i, value);
+      //     // Resolve with the added value
+      //     resolve(i)
+      //   });
+      self.getBlocksCount()
+        .then((count) => {
+          self.addLevelDBData(count, value)
+            .then((value) => {resolve(count)})
+            .catch((err) => {reject(err)})
+        })
+        .catch((err) => {reject(err)})
     });
   }
 
   // get the how many objects you have inserted in your DB
   // Implement this method
   getBlocksCount() {
-    let self = this;
-    // Add your code here
-    return new Promise(function(resolve, reject) {
-
-      let count = 0;
-      self.db.createReadStream()
-        .on('data', function(data) {
-          // Count each object inserted
-          count++;
-        })
-        .on('error', function(err) {
-          // reject with error
-          reject('Unable to read data stream!' + err);
-        })
-        .on('close', function() {
-          //resolve with the count value
-          resolve(count)
-        });
-    });
-  }
-
-  addDataToLevelDB(value) {
+    // because we are returning a promise we will need this to be able to
+    // reference this outside 'this' *inside* the Promise constructor
     let self = this;
 
     return new Promise(function(resolve, reject) {
-
       let i = 0;
       self.db.createReadStream()
         .on('data', function(data) {
+          // Count each object inserted
           i++;
         })
         .on('error', function(err) {
-          reject('Unable to read data stream!' + err);
+          // reject with error
+          reject('Unable to read data stream : ' + err);
         })
         .on('close', function() {
-          console.log('Block #' + i);
-          self.addLevelDBData(i, value);
-          // Resolve with the added value
-          resolve(value)
+          //resolve with the i value
+          resolve(i)
         });
     });
   }
