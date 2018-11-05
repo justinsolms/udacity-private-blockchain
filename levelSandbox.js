@@ -32,8 +32,12 @@ class LevelSandbox {
       //   }
       // });
       self.db.get(key)
-        .then((value) => {resolve(value)})
-        .catch((err) => {reject('Block ' + key + ' get failed : ' + err)})
+        .then((value) => {
+          resolve(value)
+        })
+        .catch((err) => {
+          reject('Block ' + key + ' get failed : ' + err)
+        })
     });
   }
 
@@ -42,11 +46,19 @@ class LevelSandbox {
     // because we are returning a promise we will need this to be able to
     // reference this outside 'this' *inside* the Promise constructor
     let self = this;
+    // console.log('db.put()');
 
     return new Promise(function(resolve, reject) {
       self.db.put(key, value)
-        .then(() => {resolve(value)})
-        .catch((err) => { reject('Block ' + key + ' submission failed : ' + err); })
+        .then(() => {
+          // console.log('.then () addLevelDBData');
+        })
+        .then((key) => {
+          resolve(value);
+        })
+        .catch((err) => {
+          reject('Block ' + key + ' submission failed : ' + err);
+        })
     });
   }
 
@@ -59,10 +71,16 @@ class LevelSandbox {
       self.getBlocksCount()
         .then((count) => {
           self.addLevelDBData(count, value)
-            .then((value) => {resolve(count)})
-            .catch((err) => {reject(err)})
+            .then((value) => {
+              resolve(count)
+            })
+            .catch((err) => {
+              reject(err)
+            })
         })
-        .catch((err) => {reject(err)})
+        .catch((err) => {
+          reject(err)
+        })
     });
   }
 
@@ -74,11 +92,11 @@ class LevelSandbox {
     let self = this;
 
     return new Promise(function(resolve, reject) {
-      let i = 0;
+      let count = 0;
       self.db.createReadStream()
         .on('data', function(data) {
           // Count each object inserted
-          i++;
+          count++;
         })
         .on('error', function(err) {
           // reject with error
@@ -86,7 +104,7 @@ class LevelSandbox {
         })
         .on('close', function() {
           //resolve with the i value
-          resolve(i)
+          resolve(count)
         });
     });
   }

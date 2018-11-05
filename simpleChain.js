@@ -3,11 +3,13 @@
 |  =============================================================*/
 const SHA256 = require('crypto-js/sha256');
 
-const delay = require('delay');
+/* ====== Lock on asynchronous code =======
+| https://www.npmjs.com/package/async-lock |
+==========================================*/
+const AsyncLock = require('async-lock');
 
 //Importing levelSandbox class
 const LevelSandboxClass = require('./levelSandbox.js');
-
 
 /* ===== Block Class ===================================
 |  Class with a constructor for block data model       |
@@ -36,6 +38,7 @@ class Block {
 class Blockchain {
 
   constructor() {
+    this.lock = new AsyncLock();
     // Creating the levelSandbox class object
     this.chain = new LevelSandboxClass.LevelSandbox();
     this.addBlock((new Block("Genesis Block")))
@@ -43,27 +46,96 @@ class Blockchain {
 
   // Add new block
   addBlock(newBlock) {
-    // Block height
-    newBlock.height = this.getBlockHeight();
-    // UTC timestamp
-    newBlock.time = new Date().getTime().toString().slice(0, -3);
-    // previous block hash
-    if (this.getBlockHeight() > 0) {
-      newBlock.previousBlockHash = this.chain.getLevelDBData(
-        this.getBlockHeight() - 1
-      ).hash;
-    }
-    // Block hash with SHA256 using newBlock and converting to a string
-    newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-    // Adding block object to chain
-    this.chain.addDataToLevelDB(newBlock)
-      .then((count) => {console.log('Added block #' + count);})
-      .catch((err) => {console.log(err);});
+    let self = this;
+    this.lock.acquire('key', function(done) {
+        // lock aquired
+        // console.log('lock acquired');
+        // Block height
+        self.getBlockHeight()
+          .then((height) => {
+            // New block height is incremented over current block height.
+            newBlock.height = height + 1;
+            // UTC timestamp
+            newBlock.time = new Date().getTime().toString().slice(0, -3);
+            // previous block hash
+            if (newBlock.height > 0) {
+              newBlock.previousBlockHash = self.chain.getLevelDBData(
+                newBlock.height - 1
+              ).hash;
+            }
+            // Block hash with SHA256 using newBlock and converting to a string
+            newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+            // Adding block object to chain
+            self.chain.addLevelDBData(newBlock.height, newBlock)
+              .then((value) => {
+                console.log('Added block' + JSON.stringify(value));
+                // Release lock
+                done();
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          })
+          .catch((err) => {
+            console.log(err);
+          })
+      })
+      .then(() => {
+        // lock released
+        // console.log('lock released');
+      }).catch((err) => {
+        console.log('lock error ' + err);
+      });
   }
 
-  // Get block height in zero based counting
+
+  XaddBlock(newBlock) {
+    // Block height
+    this.getBlockHeight()
+      .then((height) => {
+        // New block height is incremented over current block height.
+        newBlock.height = height + 1;
+        // UTC timestamp
+        newBlock.time = new Date().getTime().toString().slice(0, -3);
+        // previous block hash
+        if (newBlock.height > 0) {
+          newBlock.previousBlockHash = this.chain.getLevelDBData(
+            newBlock.height - 1
+          ).hash;
+        }
+        // Block hash with SHA256 using newBlock and converting to a string
+        newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+        // Adding block object to chain
+        this.chain.addLevelDBData(newBlock.height, newBlock)
+          .then(() => {
+            console.log('Added block #' + newBlock.height);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+
+  }
+
+  // Get block height for block count.
   getBlockHeight() {
-    return this.chain.getBlocksCount() - 1;
+    // because we are returning a promise we will need this to be able to
+    // reference this outside 'this' *inside* the Promise constructor
+    let self = this;
+
+    return new Promise(function(resolve, reject) {
+      self.chain.getBlocksCount()
+        .then((count) => {
+          resolve(count - 1)
+        })
+        .catch((err) => {
+          reject(err);
+        })
+    });
+
   }
 
   // get block
@@ -118,22 +190,15 @@ class Blockchain {
 
 // Example:
 let blockchain = new Blockchain()
-
-// We must wait until the previous block has finished adding.
-delay(2000).then((arg) => {
-  console.log('delay over')
-  blockchain.addBlock(new Block('test data'))
-  // We must wait until the previous block has finished adding.
-  delay(2000).then((arg) => {
-    console.log('delay over')
-    blockchain.addBlock(new Block('test data'))
-    // We must wait until the previous block has finished adding.
-    delay(2000).then((arg) => {
-      console.log('delay over')
-      blockchain.addBlock(new Block('test data'))
-    });
-  });
-});
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+// blockchain.addBlock(new Block('test data'))
+// blockchain.xBlock()
 
 
 // blockchain.addBlock(new Block('test data'))
