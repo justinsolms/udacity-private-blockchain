@@ -2,6 +2,8 @@
 |  Learn more: level: https://github.com/Level/level |
 /===================================================*/
 // Importing the module 'level'
+// const leveldown = require('leveldown');
+// const levelup = require('levelup');
 const level = require('level');
 // Declaring the folder path that store the data
 const chainDB = './chaindata';
@@ -9,7 +11,10 @@ const chainDB = './chaindata';
 class LevelSandbox {
   // Declaring the class constructor
   constructor() {
-    this.db = level(chainDB);
+    this.db = level(chainDB, {
+      valueEncoding: 'json'
+    });
+    // this.db = levelup(leveldown(chainDB));
   }
 
   // Get data from levelDB with key (Promise)
@@ -17,7 +22,6 @@ class LevelSandbox {
     // because we are returning a promise we will need this to be able to
     // reference this outside 'this' *inside* the Promise constructor
     let self = this;
-
     return new Promise(function(resolve, reject) {
       // self.db.get(key, (err, value) => {
       //   if (err) {
@@ -28,17 +32,19 @@ class LevelSandbox {
       //       reject(err);
       //     }
       //   } else {
+      //     // console.log('Block get key=' + key + ' value=' + JSON.stringify(value.body));
       //     resolve(value);
       //   }
       // });
       self.db.get(key)
         .then((value) => {
+          // console.log(value);
           resolve(value)
         })
         .catch((err) => {
           reject('Block ' + key + ' get failed : ' + err)
         })
-    });
+      });
   }
 
   // Add data to levelDB with key and value (Promise)
@@ -47,14 +53,14 @@ class LevelSandbox {
     // reference this outside 'this' *inside* the Promise constructor
     let self = this;
     // console.log('db.put()');
-
     return new Promise(function(resolve, reject) {
       self.db.put(key, value)
-        .then(() => {
-          // console.log('.then () addLevelDBData');
+        .then(function() {
+          return self.db.get(key)
         })
-        .then((key) => {
-          resolve(value);
+        .then(function(value) {
+          // console.log(value);
+          resolve(value)
         })
         .catch((err) => {
           reject('Block ' + key + ' submission failed : ' + err);
@@ -66,7 +72,6 @@ class LevelSandbox {
     // because we are returning a promise we will need this to be able to
     // reference this outside 'this' *inside* the Promise constructor
     let self = this;
-
     return new Promise(function(resolve, reject) {
       self.getBlocksCount()
         .then((count) => {
@@ -90,7 +95,6 @@ class LevelSandbox {
     // because we are returning a promise we will need this to be able to
     // reference this outside 'this' *inside* the Promise constructor
     let self = this;
-
     return new Promise(function(resolve, reject) {
       let count = 0;
       self.db.createReadStream()
