@@ -42,6 +42,11 @@ class Blockchain {
     this.lock = new AsyncLock();
     // Creating the levelSandbox class object
     this.chain = new LevelSandboxClass.LevelSandbox();
+    this.createGenesisBlock()
+    // this.addBlock(new Block("Genesis Block"), true)
+  }
+
+  createGenesisBlock() {
     this.addBlock(new Block("Genesis Block"), true)
   }
 
@@ -61,9 +66,9 @@ class Blockchain {
           let previousHeight = newBlock.height - 1
           let previousBlock = await self.getBlock(previousHeight)
           newBlock.previousBlockHash = previousBlock.hash;
-          // Block hash with SHA256 using newBlock and converting to a string
-          newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
         }
+        // Block hash with SHA256 using newBlock and converting to a string
+        newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
         // Add non-genesis blocks (esp. do not add with new class instance)
         if ((newBlock.height > 0 && !genesis) || (newBlock.height == 0 && genesis)) {
           try {
@@ -84,8 +89,6 @@ class Blockchain {
       addBlockAsync();
     })
   }
-
-  // Add key-block pair
 
   // Get block.
   getBlock(blockHeight) {
