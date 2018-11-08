@@ -23,19 +23,6 @@ class LevelSandbox {
     // reference this outside 'this' *inside* the Promise constructor
     let self = this;
     return new Promise(function(resolve, reject) {
-      // self.db.get(key, (err, value) => {
-      //   if (err) {
-      //     if (err.type == 'NotFoundError') {
-      //       resolve(undefined);
-      //     } else {
-      //       console.log('Block ' + key + ' get failed', err);
-      //       reject(err);
-      //     }
-      //   } else {
-      //     // console.log('Block get key=' + key + ' value=' + JSON.stringify(value.body));
-      //     resolve(value);
-      //   }
-      // });
       self.db.get(key)
         .then((value) => {
           // console.log(value);

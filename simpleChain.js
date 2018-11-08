@@ -46,6 +46,7 @@ class Blockchain {
     // this.addBlock(new Block("Genesis Block"), true)
   }
 
+  // Uniquely, and singularly, create the genesis block
   createGenesisBlock() {
     this.addBlock(new Block("Genesis Block"), true)
   }
@@ -54,7 +55,7 @@ class Blockchain {
   addBlock(newBlock, genesis = false) {
     let self = this;
     this.lock.acquire('key', function(done) {
-      // lock aquired
+      // Lock aquired
       async function addBlockAsync() {
         let height = await self.getBlockHeight();
         // UTC timestamp
@@ -73,20 +74,40 @@ class Blockchain {
         if ((newBlock.height > 0 && !genesis) || (newBlock.height == 0 && genesis)) {
           try {
             let addedBlock = await self.chain.addLevelDBData(newBlock.height, newBlock)
-            console.log('Added # '+ addedBlock.height);
+            console.log('Added # ' + addedBlock.height);
             console.log(addedBlock);
           } catch (e) {
             console.log(e);
           } finally {
             // Release lock
             done();
-            }
+          }
         } else {
           // Release lock
           done();
         }
       }
       addBlockAsync();
+    })
+  }
+
+  // Get the last added block - pending current new block additions.
+  getLatestBlock() {
+    let self = this;
+    let block = null;
+    this.lock.acquire('key', function(done) {
+      async function getLatestBlockAsync() {
+        try {
+          let height = await self.getBlockHeight();
+          block = await self.getBlock(height);
+        } catch (e) {
+          console.log('Unable to get latest block: ' + e);
+        } finally {
+          done();  // Release lock
+          return block;
+        }
+      }
+      return getLatestBlockAsync();
     })
   }
 
@@ -98,7 +119,7 @@ class Blockchain {
       try {
         block = await self.chain.getLevelDBData(blockHeight);
       } catch (e) {
-        console.log('Could not get block: ' + e);
+        console.log('Unable to get block: ' + e);
       } finally {
         return block;
       }
@@ -117,9 +138,9 @@ class Blockchain {
       try {
         count = await self.chain.getBlocksCount();
       } catch (e) {
-        console.log('Could not get block-height: ' + e);
+        console.log('Unable to get block-height: ' + e);
       } finally {
-        return count - 1;  // Height is one less than number of blocks
+        return count - 1; // Height is one less than number of blocks
       }
     }
     return getBlockHeightAsync();
@@ -127,9 +148,10 @@ class Blockchain {
 
   // validate block
   validateBlock(blockHeight) {
-    async function validateBlock() {
+    let self = this;
+    async function validateBlockAsync() {
       // get block object
-      let block = this.getBlock(blockHeight);
+      let block = await self.getBlock(blockHeight);
       // get block hash
       let blockHash = block.hash;
       // remove block hash to test block integrity. Remember, during addBlock,
@@ -144,12 +166,9 @@ class Blockchain {
         console.log('Block #' + blockHeight + ' invalid hash:\n' + blockHash + '<>' + validBlockHash);
         return false;
       }
-
     }
+    validateBlockAsync();
   }
-
-
-
 
   // Validate blockchain
   validateChain() {
@@ -177,8 +196,8 @@ class Blockchain {
 
 // Example:
 let blockchain = new Blockchain()
-// blockchain.getBlock(2)
-blockchain.addBlock(new Block('test data'))
+blockchain.validateBlock(2)
+// blockchain.addBlock(new Block('test data'))
 // blockchain.addBlock(new Block('test data'))
 // blockchain.addBlock(new Block('test data'))
 // blockchain.addBlock(new Block('test data'))
