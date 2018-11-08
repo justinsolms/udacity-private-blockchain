@@ -48,138 +48,127 @@ class Blockchain {
   addBlock(newBlock, genesis = false) {
     let self = this;
     this.lock.acquire('key', function(done) {
-        // lock aquired
-        // console.log('lock acquired');
-        // Block height
-        self.getBlockHeight()
-          .then((height) => {
-              // UTC timestamp
-              newBlock.time = new Date().getTime().toString().slice(0, -3);
-              // New block height is incremented over current block height.
-              newBlock.height = height + 1;
-              if (newBlock.height > 0) {
-                // Prepare the new Block hash
-                self.chain.getLevelDBData(newBlock.height - 1)
-                  .then((previousBlock) => {
-                    newBlock.previousBlockHash = previousBlock.hash;
-                    console.log(JSON.stringify(newBlock));
-                  })
-                  .catch((err) => {
-                      console.log(err);
-                    })
-                  }
-                // Block hash with SHA256 using newBlock and converting to a string
-                newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-                // Prevent genesis block being added with new class instance.
-                if ((newBlock.height > 0 && !genesis) || (newBlock.height == 0 && genesis)) {
-                  // Adding block object to chain
-                  self.chain.addLevelDBData(newBlock.height, newBlock)
-                    .then((value) => {
-                      console.log('Added block ' + JSON.stringify(value));
-                      // Release lock
-                      done();
-                    })
-                    .catch((err) => {
-                      console.log(err);
-                    });
-                } else {
-                  // Nentheless release the lock
-                  done();
-                }
-              })
-            .catch((err) => {
-              console.log(err);
-            })
-          })
-      .then(() => {
-        // lock released
-        // console.log('lock released');
-      }).catch((err) => {
-        console.log('lock error ' + err);
-      });
-    }
-
-    // Get block height for block count.
-    getBlockHeight() {
-      // because we are returning a promise we will need this to be able to
-      // reference this outside 'this' *inside* the Promise constructor
-      let self = this;
-
-      return new Promise(function(resolve, reject) {
-        self.chain.getBlocksCount()
-          .then((count) => {
-            resolve(count - 1)
-          })
-          .catch((err) => {
-            reject(err);
-          })
-      });
-
-    }
-
-    // get block
-    getBlock(blockHeight) {
-      // return object as a single string
-      return JSON.parse(JSON.stringify(this.chain.getLevelDBData(blockHeight)));
-    }
-
-    // validate block
-    validateBlock(blockHeight) {
-      // get block object
-      let block = this.getBlock(blockHeight);
-      // get block hash
-      let blockHash = block.hash;
-      // remove block hash to test block integrity. Remember, during addBlock,
-      // the hash not yet set.
-      block.hash = '';
-      // generate block hash
-      let validBlockHash = SHA256(JSON.stringify(block)).toString();
-      // Compare
-      if (blockHash === validBlockHash) {
-        return true;
-      } else {
-        console.log('Block #' + blockHeight + ' invalid hash:\n' + blockHash + '<>' + validBlockHash);
-        return false;
-      }
-    }
-
-    // Validate blockchain
-    validateChain() {
-      let errorLog = [];
-      for (var i = 0; i < this.getBlockHeight() - 1; i++) {
-        // validate block
-        if (!this.validateBlock(i)) errorLog.push(i);
-        // compare block's hash link to previous block.
-        let blockHash = this.chain.getLevelDBData(i).hash;
-        let previousHash = this.chain.getLevelDBData(i + 1).previousBlockHash;
-        if (blockHash !== previousHash) {
-          errorLog.push(i);
+      // lock aquired
+      async function addBlockAsync() {
+        let height = await self.getBlockHeight();
+        // UTC timestamp
+        newBlock.time = new Date().getTime().toString().slice(0, -3);
+        // New block height is incremented over current block height.
+        newBlock.height = height + 1;
+        // FIXME: The IF stateents are the problem now.
+        if (newBlock.height > 0) {
+          try {
+            let previousHeight = newBlock.height - 1
+            let previousBlock = await self.chain.getLevelDBData(previousHeight)
+            newBlock.previousBlockHash = previousBlock.hash;
+          } catch (e) {
+            console.log('Could not get previous block hash: ' + e);
+          } finally {
+            // Block hash with SHA256 using newBlock and converting to a string
+            newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+          }
+        }
+        // Add non-genesis blocks (esp. do not add with new class instance).
+        if ((newBlock.height > 0 && !genesis) || (newBlock.height == 0 && genesis)) {
+          try {
+            let addedBlock = await self.chain.addLevelDBData(newBlock.height, newBlock)
+            console.log(addedBlock);
+          } catch (e) {
+            console.log(e);
+          } finally {
+            // Release lock
+            done();
+            }
+        } else {
+          // Release lock
+          done();
         }
       }
-      if (errorLog.length > 0) {
-        console.log('Block errors = ' + errorLog.length);
-        console.log('Blocks: ' + errorLog);
-      } else {
-        console.log('No errors detected');
-      }
-    }
+      addBlockAsync();
+    })
+  }
+
+  // Get block height for block count.
+  getBlockHeight() {
+    // because we are returning a promise we will need this to be able to
+    // reference this outside 'this' *inside* the Promise constructor
+    let self = this;
+
+    return new Promise(function(resolve, reject) {
+      self.chain.getBlocksCount()
+        .then((count) => {
+          resolve(count - 1)
+        })
+        .catch((err) => {
+          reject(err);
+        })
+    });
 
   }
 
+  // get block
+  getBlock(blockHeight) {
+    // return object as a single string
+    return JSON.parse(JSON.stringify(this.chain.getLevelDBData(blockHeight)));
+  }
 
-  // Example:
-  let blockchain = new Blockchain()
-  blockchain.addBlock(new Block('test data'))
-  blockchain.addBlock(new Block('test data'))
-  blockchain.addBlock(new Block('test data'))
-  blockchain.addBlock(new Block('test data'))
-  blockchain.addBlock(new Block('test data'))
-  blockchain.addBlock(new Block('test data'))
-  blockchain.addBlock(new Block('test data'))
-  // blockchain.addBlock(new Block('test data'))
-  // blockchain.xBlock()
+  // validate block
+  validateBlock(blockHeight) {
+    // get block object
+    let block = this.getBlock(blockHeight);
+    // get block hash
+    let blockHash = block.hash;
+    // remove block hash to test block integrity. Remember, during addBlock,
+    // the hash not yet set.
+    block.hash = '';
+    // generate block hash
+    let validBlockHash = SHA256(JSON.stringify(block)).toString();
+    // Compare
+    if (blockHash === validBlockHash) {
+      return true;
+    } else {
+      console.log('Block #' + blockHeight + ' invalid hash:\n' + blockHash + '<>' + validBlockHash);
+      return false;
+    }
+  }
+
+  // Validate blockchain
+  validateChain() {
+    let errorLog = [];
+    for (var i = 0; i < this.getBlockHeight() - 1; i++) {
+      // validate block
+      if (!this.validateBlock(i)) errorLog.push(i);
+      // compare block's hash link to previous block.
+      let blockHash = this.chain.getLevelDBData(i).hash;
+      let previousHash = this.chain.getLevelDBData(i + 1).previousBlockHash;
+      if (blockHash !== previousHash) {
+        errorLog.push(i);
+      }
+    }
+    if (errorLog.length > 0) {
+      console.log('Block errors = ' + errorLog.length);
+      console.log('Blocks: ' + errorLog);
+    } else {
+      console.log('No errors detected');
+    }
+  }
+
+}
 
 
-  // blockchain.addBlock(new Block('test data'))
-  // blockchain.addBlock(new Block('test more data'))
-  // blockchain
+// Example:
+let blockchain = new Blockchain()
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+blockchain.addBlock(new Block('test data'))
+// blockchain.addBlock(new Block('test data'))
+// blockchain.xBlock()
+
+
+// blockchain.addBlock(new Block('test data'))
+// blockchain.addBlock(new Block('test more data'))
+// blockchain
