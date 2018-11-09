@@ -103,7 +103,7 @@ class Blockchain {
         } catch (e) {
           console.log('Unable to get latest block: ' + e);
         } finally {
-          done();  // Release lock
+          done(); // Release lock
           return block;
         }
       }
@@ -146,7 +146,7 @@ class Blockchain {
     return getBlockHeightAsync();
   }
 
-  // validate block
+  // Validate a block
   validateBlock(blockHeight) {
     let self = this;
     async function validateBlockAsync() {
@@ -167,28 +167,38 @@ class Blockchain {
         return false;
       }
     }
-    validateBlockAsync();
+    return validateBlockAsync();
   }
 
   // Validate blockchain
   validateChain() {
+    let self = this;
     let errorLog = [];
-    for (var i = 0; i < this.getBlockHeight() - 1; i++) {
-      // validate block
-      if (!this.validateBlock(i)) errorLog.push(i);
-      // compare block's hash link to previous block.
-      let blockHash = this.chain.getLevelDBData(i).hash;
-      let previousHash = this.chain.getLevelDBData(i + 1).previousBlockHash;
-      if (blockHash !== previousHash) {
-        errorLog.push(i);
+    async function validateChainAysnc() {
+      for (var i = 0; i < await self.getBlockHeight() - 1; i++) {
+        // validate block
+        let valid = await self.validateBlock(i);
+        if (!valid) {
+          errorLog.push(i);
+        }
+        let block = await self.getBlock(i);
+        let next = await self.getBlock(i + 1);
+        // compare block's hash link to previous block.
+        let blockHash = block.hash;
+        let previousHash = next.previousBlockHash;
+        if (blockHash == previousHash) {
+        } else {
+          // errorLog.push(i);
+        }
+      }
+      if (errorLog.length > 0) {
+        console.log('Block errors = ' + errorLog.length);
+        console.log('Blocks: ' + errorLog);
+      } else {
+        console.log('No errors detected');
       }
     }
-    if (errorLog.length > 0) {
-      console.log('Block errors = ' + errorLog.length);
-      console.log('Blocks: ' + errorLog);
-    } else {
-      console.log('No errors detected');
-    }
+    validateChainAysnc();
   }
 
 }
@@ -196,7 +206,8 @@ class Blockchain {
 
 // Example:
 let blockchain = new Blockchain()
-blockchain.validateBlock(2)
+// blockchain.validateBlock()
+blockchain.validateChain()
 // blockchain.addBlock(new Block('test data'))
 // blockchain.addBlock(new Block('test data'))
 // blockchain.addBlock(new Block('test data'))
