@@ -55,6 +55,7 @@ class Blockchain {
   addBlock(newBlock, genesis = false) {
     let self = this;
     let block = null;
+    // Use lock to avoid multiple acccess to .put(key, value).
     this.lock.acquire('key', function(done) {
       // Lock aquired
       async function addBlockAsync() {
@@ -70,13 +71,19 @@ class Blockchain {
           let previousBlock = await self.getBlock(previousHeight)
           newBlock.previousBlockHash = previousBlock.hash;
         }
-        // Block hash with SHA256 using newBlock and converting to a string
+        // Block hash with SHA256 using newBlock and converting to a string.
+        // Remmeber that this hash is calculated without itself, so remove it
+        // when validating a block.
         newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-        let addedBlock = null;
-        // Add non-genesis blocks (esp. do not add with new class instance)
+        let addedBlock = null; // Restrict scope
+        // Add block
         if ((newBlock.height > 0 && !genesis) || (newBlock.height == 0 && genesis)) {
+          // We come here when there is:
+          //    1. Fresh LevelDB at constructor time to create Genesis Block.
+          //    2. Routine block added.
           try {
-            // Add block and receive the block back via a .get(key)
+            // Add block and read the block back via a .get(key) op for later
+            // validation.
             addedBlock = await self.chain.addLevelDBData(newBlock.height, newBlock)
           } catch (e) {
             console.log(e);
@@ -85,21 +92,25 @@ class Blockchain {
           }
         } else {
           //  We will not add a block (there may already be a geneis block). A
-          //  null will be returned below for the block value, by default
+          //  null will be returned below for the block value, by default,
+          //  usefull below in validation enclosing `if` statement.
           done(); // Release lock
         }
-        // console.log(addedBlock);
         return [newBlockHeight, addedBlock];
       }
       addBlockAsync().then((value) => {
-        // Validate the read-back (.get(key) in above comments) of the added
-        // block. This is a good check that the write-read process is
-        // repeatable
+        // Them the Promise to Validate the read-back block (see .get(key) in
+        // above comments) of the added block. This is a good check that the
+        // write-read process is correct and repeatable.
         let newBlockHeight = value[0];
         let newBlock = value[1];
         if (newBlock) {
           self.validateBlock(newBlockHeight)
-          console.log('Added & Validated # ' + newBlockHeight);
+          if (newBlockHeight == 0) {
+            console.log('Added & Validated Gensis Block');
+          } else {
+            console.log('Added & Validated # ' + newBlockHeight);
+          }
         } else {
           // We are here when we avoid repeat adding of a geneis block at
           // construct time when one already exixts.
@@ -113,6 +124,7 @@ class Blockchain {
     let self = this;
     let block = null;
     this.lock.acquire('key', function(done) {
+      // Lock so we must wait for the latest addBlock to finish.
       async function getLatestBlockAsync() {
         try {
           let height = await self.getBlockHeight();
@@ -124,7 +136,11 @@ class Blockchain {
           return block;
         }
       }
-      return getLatestBlockAsync();
+      // This enclosing method is not in the rubric. Pls read comments below.
+      getLatestBlockAsync().then((value) => {
+        // I would do something usefull here were this in the rubric.
+        // console.log(value);
+      });
     })
   }
 
@@ -141,6 +157,7 @@ class Blockchain {
         return block;
       }
     }
+    // Return a Promise from which the Block could be thenned.
     return getBlockAsysnc();
     // (async () => { console.log(await getBlockAsysnc()); })()
   }
@@ -160,6 +177,7 @@ class Blockchain {
         return count - 1; // Height is one less than number of blocks
       }
     }
+    // Return a Promise from which the Block height could be thenned.
     return getBlockHeightAsync();
   }
 
@@ -184,6 +202,7 @@ class Blockchain {
         return false;
       }
     }
+    // Return a Promise from which the Block validity truth could be thenned.
     return validateBlockAsync();
   }
 
@@ -222,9 +241,13 @@ class Blockchain {
 // Export the class
 module.exports.Blockchain = Blockchain;
 
+// NOTE: I prefered to use the test code below instead of the boilerplate test
+// code (with the timeout loop) provided as i wished to immdiately post block
+// put() to get() the same block back and then immediatly validate it. That
+// logic was not compatible with the test boilerplate code.
 async function Test() {
   let blockchain = new Blockchain()
-  setTimeout(function () {
+  setTimeout(function() {
     // Someone comes along later (i.e., asynchronously) and checks the
     // blockchain.
     blockchain.validateChain()
