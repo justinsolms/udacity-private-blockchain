@@ -54,6 +54,7 @@ class Blockchain {
   // Add new block
   addBlock(newBlock, genesis = false) {
     let self = this;
+    let block = null;
     this.lock.acquire('key', function(done) {
       // Lock aquired
       async function addBlockAsync() {
@@ -61,7 +62,8 @@ class Blockchain {
         // UTC timestamp
         newBlock.time = new Date().getTime().toString().slice(0, -3);
         // New block height is incremented over current block height.
-        newBlock.height = height + 1;
+        let newBlockHeight = height + 1;
+        newBlock.height = newBlockHeight;
         if (newBlock.height > 0) {
           // Get previous block
           let previousHeight = newBlock.height - 1
@@ -70,24 +72,39 @@ class Blockchain {
         }
         // Block hash with SHA256 using newBlock and converting to a string
         newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+        let addedBlock = null;
         // Add non-genesis blocks (esp. do not add with new class instance)
         if ((newBlock.height > 0 && !genesis) || (newBlock.height == 0 && genesis)) {
           try {
-            let addedBlock = await self.chain.addLevelDBData(newBlock.height, newBlock)
-            console.log('Added # ' + addedBlock.height);
-            console.log(addedBlock);
+            // Add block and receive the block back via a .get(key)
+            addedBlock = await self.chain.addLevelDBData(newBlock.height, newBlock)
           } catch (e) {
             console.log(e);
           } finally {
-            // Release lock
-            done();
+            done(); // Release lock
           }
         } else {
-          // Release lock
-          done();
+          //  We will not add a block (there may already be a geneis block). A
+          //  null will be returned below for the block value, by default
+          done(); // Release lock
         }
+        // console.log(addedBlock);
+        return [newBlockHeight, addedBlock];
       }
-      addBlockAsync();
+      addBlockAsync().then((value) => {
+        // Validate the read-back (.get(key) in above comments) of the added
+        // block. This is a good check that the write-read process is
+        // repeatable
+        let newBlockHeight = value[0];
+        let newBlock = value[1];
+        if (newBlock) {
+          self.validateBlock(newBlockHeight)
+          console.log('Added & Validated # ' + newBlockHeight);
+        } else {
+          // We are here when we avoid repeat adding of a geneis block at
+          // construct time when one already exixts.
+        }
+      });
     })
   }
 
@@ -186,16 +203,15 @@ class Blockchain {
         // compare block's hash link to previous block.
         let blockHash = block.hash;
         let previousHash = next.previousBlockHash;
-        if (blockHash == previousHash) {
-        } else {
-          // errorLog.push(i);
+        if (blockHash == previousHash) {} else {
+          errorLog.push(i);
         }
       }
       if (errorLog.length > 0) {
         console.log('Block errors = ' + errorLog.length);
         console.log('Blocks: ' + errorLog);
       } else {
-        console.log('No errors detected');
+        console.log('Chain is validated');
       }
     }
     validateChainAysnc();
@@ -203,22 +219,26 @@ class Blockchain {
 
 }
 
+// Export the class
+module.exports.Blockchain = Blockchain;
 
-// Example:
-let blockchain = new Blockchain()
-// blockchain.validateBlock()
-blockchain.validateChain()
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test data'))
-// blockchain.xBlock()
-
-
-// blockchain.addBlock(new Block('test data'))
-// blockchain.addBlock(new Block('test more data'))
-// blockchain
+async function Test() {
+  let blockchain = new Blockchain()
+  setTimeout(function () {
+    // Someone comes along later (i.e., asynchronously) and checks the
+    // blockchain.
+    blockchain.validateChain()
+  }, 2000);
+  // Add a whole lot of blocks.
+  blockchain.addBlock(new Block('Test data 01'))
+  blockchain.addBlock(new Block('Test data 02'))
+  blockchain.addBlock(new Block('Test data 03'))
+  blockchain.addBlock(new Block('Test data 04'))
+  blockchain.addBlock(new Block('Test data 05'))
+  blockchain.addBlock(new Block('Test data 06'))
+  blockchain.addBlock(new Block('Test data 07'))
+  blockchain.addBlock(new Block('Test data 08'))
+  blockchain.addBlock(new Block('Test data 09'))
+  blockchain.addBlock(new Block('Test data 10'))
+}
+Test();
