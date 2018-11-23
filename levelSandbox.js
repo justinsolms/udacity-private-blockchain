@@ -29,7 +29,7 @@ class LevelSandbox {
           resolve(value)
         })
         .catch((err) => {
-          reject('Block ' + key + ' get failed : ' + err)
+          reject('getLevelDBData Error: key=' + key + ', err=' + err);
         })
       });
   }
@@ -50,7 +50,7 @@ class LevelSandbox {
           resolve(value)
         })
         .catch((err) => {
-          reject('Block ' + key + ' submission failed : ' + err);
+            reject('addLevelDBData Error: key=' + key + ', err=' + err);
         })
     });
   }
@@ -71,7 +71,7 @@ class LevelSandbox {
             })
         })
         .catch((err) => {
-          reject(err)
+            reject(err);
         })
     });
   }
@@ -91,7 +91,7 @@ class LevelSandbox {
         })
         .on('error', function(err) {
           // reject with error
-          reject('Unable to read data stream : ' + err);
+          reject('createReadStream Error: err=' + err);
         })
         .on('close', function() {
           //resolve with the i value
