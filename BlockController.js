@@ -27,13 +27,19 @@ class BlockController {
     getBlockByIndex() {
         this.server.route({
             method: 'GET',
-            path: '/api/block/{index}',
+            path: '/block/{index}',
             handler: async (request, h) => {
                 // Get requested block
                 let index = request.params.index;
-                let block = await this.blocks.getBlock(index);
-                // Respond
-                return (JSON.stringify(block, null, 2) + '\n');
+                let response = JSON.stringify("Ooops") + '\n';
+                try {
+                    let block = await this.blocks.getBlock(index);
+                    response = JSON.stringify(block, null, 2) + '\n';
+                } catch (err) {
+                    response = JSON.stringify(err) + '\n';
+                } finally {
+                    return response
+                }
             }
         });
     }
@@ -44,17 +50,28 @@ class BlockController {
     postNewBlock() {
         this.server.route({
             method: 'POST',
-            path: '/api/block',
+            path: '/block',
             handler: async (request, h) => {
                 // Get posted data.
                 let data = request.query.data;
-                // Get block height
-                let height = await this.blocks.getBlockHeight();
-                // Add new block
-                let newBlock = new Block(data);
-                let addedBlock = await this.blocks.addBlock(newBlock);
-                // Respond
-                return (JSON.stringify(addedBlock, null, 2) + '\n');
+                let response = JSON.stringify("Ooops") + '\n';
+                try {
+                    // Check if there is data in the post
+                    if (data == "") {
+                        throw 'Empty POST data - No block added!';
+                    }
+                    // Get block height
+                    let height = await this.blocks.getBlockHeight();
+                    // Add new block
+                    let newBlock = new Block(data);
+                    let addedBlock = await this.blocks.addBlock(newBlock);
+                    // Respond
+                    response = JSON.stringify(addedBlock, null, 2) + '\n';
+                } catch (err) {
+                    response = JSON.stringify(err) + '\n';
+                } finally {
+                    return response
+                }
             }
         });
     }

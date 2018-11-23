@@ -6,11 +6,11 @@ const Hapi = require('hapi');
 class BlockAPI {
 
     /**
-     * Constructor that allows initialize the class 
+     * Constructor that allows initialize the class
      */
     constructor() {
 		this.server = Hapi.Server({
-            port: 3000,
+            port: 8000,
             host: 'localhost'
         });
         this.initControllers();
@@ -23,7 +23,7 @@ class BlockAPI {
 	initControllers() {
 		require("./BlockController.js")(this.server);
 	}
-    
+
     async start() {
         await this.server.start();
         console.log(`Server running at: ${this.server.info.uri}`);

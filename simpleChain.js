@@ -39,7 +39,8 @@ class Blockchain {
 
     // Create the genesis block and return a promice with the genesis block
     createGenesisBlock() {
-        return this.addBlock(new Block("Genesis Block"), true);
+        let name = "First block in the chain - Genesis block"
+        return this.addBlock(new Block(name), true);
     }
 
     // Add new block
@@ -119,10 +120,9 @@ class Blockchain {
             try {
                 let height = await self.getBlockHeight();
                 block = await self.getBlock(height + 1);
-            } catch (err) {
-                console.log('getLatestBlock Error: err=' + err);
-            } finally {
                 return block;
+            } catch (err) {
+                throw 'getLatestBlock Error: err=' + err;
             }
         }
         // Return a Promise from which the Block could be thenned.
@@ -136,10 +136,9 @@ class Blockchain {
             let block = null;
             try {
                 block = await self.chain.getLevelDBData(blockHeight);
-            } catch (err) {
-                console.log('getBlock Error: err=' + err);
-            } finally {
                 return block;
+            } catch (err) {
+                throw 'getBlock Error: err=' + err;
             }
         }
         // Return a Promise from which the Block could be thenned.
