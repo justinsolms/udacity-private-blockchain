@@ -107,8 +107,7 @@ class Blockchain {
                 // We are here when we avoid repeat adding of a genesis
                 // block at construct time when one already exists.
             }
-            // console.log(newBlock);
-            // return newBlock;
+            return newBlock;
         });
     }
 
@@ -251,11 +250,11 @@ async function theLoop(myBlockChain) {
 }
 
 // ============================ TEST ==========================
-let myBlockChain = new Blockchain()
-theLoop(myBlockChain)
-    // Do it one more time just to be sure.
-    .then(() => {
-        myBlockChain.validateChain();
-    })
-    .catch(err => console.log(err))
-    // We should have no unhandled promises now.
+// let myBlockChain = new Blockchain()
+// theLoop(myBlockChain)
+//     // Do it one more time just to be sure.
+//     .then(() => {
+//         myBlockChain.validateChain();
+//     })
+//     .catch(err => console.log(err))
+//     // We should have no unhandled promises now.

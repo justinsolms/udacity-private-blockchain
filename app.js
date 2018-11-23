@@ -1,39 +1,34 @@
-//Importing levelSandbox class
-const LevelSandboxClass = require('./levelSandbox.js');
+const Hapi = require('hapi');
 
-// Creating the levelSandbox class object
-const db = new LevelSandboxClass.LevelSandbox();
+/**
+ * Class Definition for the REST API
+ */
+class BlockAPI {
 
-// Creating Data
-(function theLoop(i) {
-  setTimeout(function() {
-    //Test Object
-    let objAux = {
-      id: i,
-      data: `Data #: ${i}`
-    };
-    db.addLevelDBData(i, JSON.stringify(objAux).toString())
-      .then((result) => {
-        if (!result) {
-          console.log("Error Adding data");
-        } else {
-          console.log(result);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    i++;
-    if (i < 10) {
-      theLoop(i)
-    } else {
-      db.getBlocksCount()
-        .then((count) => {
-          console.log(`The id for your next object is: ${count}`);
-        })
-        .catch((err) => {
-          console.log(err);
+    /**
+     * Constructor that allows initialize the class 
+     */
+    constructor() {
+		this.server = Hapi.Server({
+            port: 3000,
+            host: 'localhost'
         });
+        this.initControllers();
+        this.start();
     }
-  }, 200);
-})(0);
+
+    /**
+     * Initilization of all the controllers
+     */
+	initControllers() {
+		require("./BlockController.js")(this.server);
+	}
+    
+    async start() {
+        await this.server.start();
+        console.log(`Server running at: ${this.server.info.uri}`);
+    }
+
+}
+
+new BlockAPI();
