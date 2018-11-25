@@ -1,24 +1,30 @@
 const SHA256 = require('crypto-js/sha256');
+
 const SimpleChain = require('./simpleChain.js');
-const {
-    Block,
-    Blockchain
-} = SimpleChain;
+const { Block, Blockchain } = SimpleChain;
+
+const RequestManager = require('./requestManager.js');
+const {Mempool} = RequestManager;
+
+
 /**
  * Controller Definition to encapsulate routes to work with blocks
  */
 class BlockController {
 
     /**
-     * Constructor to create a new BlockController, you need to initialize here all your endpoints
+     * Constructor to create a new BlockController, you need to initialize
+     * here all your endpoints
      * @param {*} server
      */
     constructor(server) {
         this.server = server;
         this.blocks = new Blockchain();
+        this.mempool = new Mempool();
         this.initializeMockData();
         this.getBlockByIndex();
         this.postNewBlock();
+        this.requestValidation();
     }
 
     /**
@@ -53,9 +59,10 @@ class BlockController {
             path: '/block',
             handler: async (request, h) => {
                 // Get posted data.
-                let data = request.query.data;
                 let response = JSON.stringify("Ooops") + '\n';
                 try {
+                    // Expect `data` parameter
+                    let data = request.query.data;
                     // Check if there is data in the post
                     if (data == "") {
                         throw 'Empty POST data - No block added!';
@@ -74,6 +81,34 @@ class BlockController {
                 }
             }
         });
+    }
+
+    // Request a validation
+    requestValidation(walletAddress) {
+        let self = this;
+        this.server.route({
+            method: 'POST',
+            path: '/requestValidation',
+            handler: async (request, h) => {
+                // Get posted wallet address.
+                let response = JSON.stringify("Ooops") + '\n';
+                // Expect `address` parameter
+                let address = request.query.address;
+                // Check if there is address in the post
+                if (address == "") {
+                    throw 'Empty POST address - No block added!';
+                }
+                let requestObject = self.mempool.addRequestValidation(address);
+                // Respond
+                response = JSON.stringify(requestObject, null, 2) + '\n';
+                try {
+                } catch (err) {
+                    response = JSON.stringify(err) + '\n';
+                } finally {
+                    return response
+                }
+            }
+        })
     }
 
     /**
@@ -102,6 +137,28 @@ class BlockController {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Exporting the BlockController class
