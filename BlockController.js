@@ -25,6 +25,7 @@ class BlockController {
         this.getBlockByIndex();
         this.postNewBlock();
         this.requestValidation();
+        this.validateRequestByWallet();
     }
 
     /**
@@ -62,7 +63,7 @@ class BlockController {
                 let response = JSON.stringify("Ooops") + '\n';
                 try {
                     // Expect `data` parameter
-                    let data = request.query.data;
+                    let data = request.payload.data;
                     // Check if there is data in the post
                     if (data == "") {
                         throw 'Empty POST data - No block added!';
@@ -90,19 +91,20 @@ class BlockController {
             method: 'POST',
             path: '/requestValidation',
             handler: async (request, h) => {
+                let response = JSON.stringify("Ooops") + '\n';  // Scope!!
                 // Get posted wallet address.
-                let response = JSON.stringify("Ooops") + '\n';
-                // Expect `address` parameter
-                let address = request.query.address;
-                // Check if there is address in the post
-                if (address == "") {
-                    throw 'Empty POST address - No block added!';
-                }
-                let requestObject = self.mempool.addRequestValidation(address);
-                // Respond
-                response = JSON.stringify(requestObject, null, 2) + '\n';
                 try {
+                    // Expect `address` parameter
+                    let address = request.payload.address;
+                    // Check if there is address in the post
+                    if (address == "") {
+                        throw 'Empty POST address - No block added!';
+                    }
+                    let requestObject = self.mempool.addRequestValidation(address);
+                    // Respond
+                    response = JSON.stringify(requestObject, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 } finally {
                     return response
@@ -110,6 +112,41 @@ class BlockController {
             }
         })
     }
+
+    validateRequestByWallet() {
+        let self = this;
+        this.server.route({
+            method: 'POST',
+            path: '/validateRequestByWallet',
+            handler: async (request, h) => {
+                let response = JSON.stringify("Ooops") + '\n';  // Scope!!
+                // Get posted wallet address.
+                try {
+                    // Expect `address` parameter
+                    let address = request.payload.address;
+                    let signature = request.payload.signature;
+                    console.log(signature);
+                    // Check if there is address in the post
+                    if (address == "") {
+                        throw 'Invalid/missing POST address - No block added!';
+                    }
+                    if (signature == "") {
+                        throw 'Invalid/missing POST signature - No block added!';
+                    }
+                    let validRequest = self.mempool.validateRequestByWallet(address, signature);
+                    // Respond
+                    response = JSON.stringify(validRequest, null, 2) + '\n';
+                } catch (err) {
+                    console.log(err);
+                    response = JSON.stringify(err) + '\n';
+                } finally {
+                    return response
+                }
+            }
+        })
+
+    }
+
 
     /**
      * Help method to inizialized Mock dataset, adds 10 test blocks to the blocks array
