@@ -1,5 +1,7 @@
 const SHA256 = require('crypto-js/sha256');
 
+const hex2ascii = require('hex2ascii');
+
 const SimpleChain = require('./simpleChain.js');
 const { Block, Blockchain } = SimpleChain;
 
@@ -173,6 +175,8 @@ class BlockController {
                     }
                     let newBlock = new Block(body);
                     let addedBlock = await this.blocks.addBlock(newBlock);
+                    // Decode story
+                    addedBlock.body.star.storyDecoded = hex2ascii(addedBlock.body.star.story);
                     // Respond
                     response = JSON.stringify(addedBlock, null, 2) + '\n';
                 } catch (err) {
