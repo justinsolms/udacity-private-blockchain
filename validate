@@ -1,0 +1,7 @@
+#!/bin/bash
+SIGNATURE=$1
+curl -X POST \
+http://localhost:8000/validate \
+-H "Content-Type: application/json" \
+-H 'cache-control: no-cache' \
+-d '{"address":"1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o","signature":"ILtedxTSn3gAwEM6ebivwzq5ZQvbRJ3jQkiBLkQiJhhremE7Re/71SfHFyBVXe+wV9xohpta5GMLT9fgS87TpcA="}'

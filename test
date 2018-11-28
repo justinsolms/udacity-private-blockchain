@@ -1,0 +1,6 @@
+#!/bin/bash
+curl -X POST \
+    http://localhost:8000/oldblock \
+    -H "Content-Type: application/json" \
+    -H 'cache-control: no-cache' \
+    -d '{"data":"Test block"}'

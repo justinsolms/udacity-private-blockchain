@@ -1,0 +1,20 @@
+justin@sundesk:~$ curl -H "Content-Type: application/json" -X POST -d '{"address":"1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o"}' http://localhost:8000/requestValidation
+{
+  "walletAddress": "1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o",
+  "requestTimeStamp": "1543334876",
+  "message": "1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o:1543334876:starRegistry",
+  "validationWindow": 300,
+  "messageSignature": false
+}
+justin@sundesk:~$ curl -H "Content-Type: application/json" -X POST -d '{"address":"1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o","signature":"Hys2EesFH6WAmm7CR/qOhiZq+lpVcCCJdHYtH8n5Av+8T0dAoe0t1vXaGnrx8SmorkmsOG2vUEJQlNF65q845F0="}' http://localhost:8000/validateRequestByWallet
+{
+  "status": {
+    "walletAddress": "1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o",
+    "requestTimeStamp": "1543334876",
+    "message": "1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o:1543334876:starRegistry",
+    "validationWindow": 254,
+    "messageSignature": true
+  },
+  "registerStar": true
+}
+justin@sundesk:~$ 

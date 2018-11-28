@@ -1,0 +1,7 @@
+#!/bin/bash
+ADDRESS=$1
+curl -X POST \
+    http://localhost:8000/request \
+    -H "Content-Type: application/json" \
+    -H 'cache-control: no-cache' \
+    -d '{"address":"1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o"}'

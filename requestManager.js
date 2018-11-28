@@ -128,10 +128,21 @@ class Mempool {
             throw 'Request already validated';
         } else {
             // Thow rather than return
-            console.log('Request not in mempool');
-            log(this.mempool)
-            console.log('-');
-            throw 'Request not in mempool';
+            throw 'Request does not exist';
+        }
+    }
+
+    // Verify if the request is validated.
+    verifyAddressRequest(address) {
+        if (address in this.mempoolValid) {
+            let isValid = this.mempoolValid[address].registerStar;
+            return isValid;
+        } else if (address in this.mempool) {
+            // Thow rather than return
+            throw 'Request not validated';
+        } else {
+            // Thow rather than return
+            throw 'Request does not exist';
         }
     }
 
