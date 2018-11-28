@@ -100,15 +100,13 @@ class BlockController {
                     if (address == "") {
                         throw 'Empty POST address - No block added!';
                     }
-                    let requestObject = self.mempool.addRequestValidation(address);
+                    let requestObject = self.mempool.addValidationRequest(address);
                     // Respond
                     response = JSON.stringify(requestObject, null, 2) + '\n';
                 } catch (err) {
-                    console.log(err);
                     response = JSON.stringify(err) + '\n';
-                } finally {
-                    return response
                 }
+                return response
             }
         })
     }
@@ -125,7 +123,6 @@ class BlockController {
                     // Expect `address` parameter
                     let address = request.payload.address;
                     let signature = request.payload.signature;
-                    console.log(signature);
                     // Check if there is address in the post
                     if (address == "") {
                         throw 'Invalid/missing POST address - No block added!';
@@ -137,11 +134,9 @@ class BlockController {
                     // Respond
                     response = JSON.stringify(validRequest, null, 2) + '\n';
                 } catch (err) {
-                    console.log(err);
                     response = JSON.stringify(err) + '\n';
-                } finally {
-                    return response
                 }
+                return response
             }
         })
 

@@ -48,95 +48,90 @@ class Mempool {
         this.mempoolValid = new Object();
     }
 
-    // Add a validation request to the mempool.
-    addRequestValidation(walletAddress) {
-        let requestObject;
-        // Check if already in the mempool
-        if (!(walletAddress in this.mempool)) {
-            // Create a timestamped request object.
-            requestObject = new Request(walletAddress);
-            // Add a validation request to the mempool with timeout.
-            this.addRequestMempoolTimeOut(requestObject, TimeoutRequestsWindowTime);
-            console.log('Added request: ' + requestObject.walletAddress);
-        } else {
-            // TODO: Rather return JSON error objects.
-            console.log('Not adding another - same address: ' + walletAddress);
-        }
-        return this.mempool[walletAddress];
-    }
-
-    // Add a validation request to the mempool.
-    addRequestMempoolValid(requestObject) {
-        this.mempoolValid[requestObject.walletAddress] = requestObject;
+    // Remove a request and its timeout.
+    removeRequest(requestObject) {
+        delete this.mempool[requestObject.walletAddress];
+        clearTimeout(this.timeoutRequests[requestObject.walletAddress]);
+        delete this.timeoutRequests[requestObject.walletAddress];
     }
 
     // Add a validation request to the mempool with timeout.
-    addRequestMempoolTimeOut(requestObject, TimeoutRequestsWindowTime) {
+    addRequestWithTimeOut(requestObject, TimeoutRequestsWindowTime) {
         let self = this;
         // Put the request object back and restore its timeout
         this.mempool[requestObject.walletAddress] = requestObject;
         // Set a callback function to remove the requestObject after
         // time out
         this.timeoutRequests[requestObject.walletAddress] = setTimeout(
-            function() {
-                console.log('Removing: ' + requestObject.walletAddress);
-                self.removeRequestMempoolTimeOut(requestObject)
-                console.log('Mempool is now: ' + this.mempool);
-            }, TimeoutRequestsWindowTime);
+            () => self.removeRequest(requestObject),
+            TimeoutRequestsWindowTime
+        );
     }
 
-    // Remove a request and its timeout.
-    removeRequestMempoolTimeOut(requestObject) {
-        delete this.mempool[requestObject.walletAddress]
-        delete this.timeoutRequests[requestObject.walletAddress]
+    // Add a validated request to the mempool.
+    addValidatedRequest(requestObject) {
+        let address = requestObject.status.walletAddress;
+        this.mempoolValid[address] = requestObject;
+    }
+
+    // =========================================================================
+
+    // Request a vaidation object for signature
+    addValidationRequest(walletAddress) {
+        let requestObject;
+        // Check if already in the mempool
+        if (walletAddress in this.mempool) {
+            // Thow rather than return
+            let timeLeft = this.mempool[walletAddress].validationWindow;
+            throw 'Request awating validation, timeout in ' + timeLeft;
+        } else if (walletAddress in this.mempoolValid) {
+            // Thow rather than return
+            throw 'Request already validated';
+        } else {
+            // Create a timestamped request object.
+            requestObject = new Request(walletAddress);
+            // Add a validation request to the mempool with timeout.
+            this.addRequestWithTimeOut(requestObject, TimeoutRequestsWindowTime);
+            return this.mempool[walletAddress];
+        }
     }
 
     // Validate a request message or not.
-    // TODO: Return JSON objecvt for everything.
     validateRequestByWallet(address, signature) {
-        let validRequest;
         // Check if request is in the mempool
         if (address in this.mempool) {
             // It is in the mempool -> it was inserted & it hasn't timed out &
             // hasn't been validated.
             let requestObject = this.mempool[address];
-            // Copy the request object from the mempool & delete it and its
-            // timout. If it cannot be verified we'll put the object back
-            // with a fresh timeout with the proper time left.
-            this.removeRequestMempoolTimeOut(requestObject);
             // Verify the message
-            let message = requestObject.message;
-            console.log({
-                message : message,
-                address : address,
-                signature : signature
-            });
-            let isValid;
-            isValid = bitcoinMessage.verify(message, address, signature);
             try {
+                let message = requestObject.message;
+                let isValid = bitcoinMessage.verify(message, address, signature);
+                if (!isValid) throw Error("Invalid signature")
             } catch (err) {
-                // TODO: Return error to poster.
-            } finally {
-
+                // Thow rather than return
+                throw err.message;
             }
-            if (isValid) {
-                // Mark as valid
-                requestObject.messageSignature = isValid;
-                // Construct validated object.
-                let validObject = new Object();
-                validObject.status = requestObject;
-                validObject.registerStar = true;
-                this.addRequestMempoolValid(validObject);
-                console.log('Validated request address: ' + validObject.walletAddress);
-                return validObject;
-            } else {
-                let invalidObject = requestObject;
-                let TimeoutRequestsWindowTime = invalidObject.validationWindow;
-                this.addRequestMempoolTimeOut(invalidObject, TimeoutRequestsWindowTime);
-                console.log('InValidated request: ' + invalidObject.walletAddress);
-            }
+            // Remove request form mempool
+            this.removeRequest(requestObject);
+            // Mark as valid
+            requestObject.messageSignature = true;
+            // Construct validated object.
+            let validObject = {
+                status: requestObject,
+                registerStar: true
+            };
+            this.addValidatedRequest(validObject);
+            return this.mempoolValid[requestObject.walletAddress];
+        } else if (address in this.mempoolValid) {
+            // Thow rather than return
+            throw 'Request already validated';
         } else {
-            console.log('No such address or validated or expired');
+            // Thow rather than return
+            console.log('Request not in mempool');
+            log(this.mempool)
+            console.log('-');
+            throw 'Request not in mempool';
         }
     }
 
