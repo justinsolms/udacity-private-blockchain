@@ -8,6 +8,7 @@ const { Block, Blockchain } = SimpleChain;
 const RequestManager = require('./requestManager.js');
 const {Mempool} = RequestManager;
 
+const mockStarData = require('./mockStarData.js');
 
 /**
  * Controller Definition to encapsulate routes to work with blocks
@@ -23,27 +24,72 @@ class BlockController {
         this.server = server;
         this.blocks = new Blockchain();
         this.mempool = new Mempool();
-        this.initializeMockData();
-        this.getBlockByIndex();
+        mockStarData.initializeMockData(this);
+        this.getBlockByHeight();
+        this.getBlockByHash();
+        this.getBlockByAddress();
         this.postNewBlock();
         this.requestValidation();
         this.validateRequestByWallet();
         this.addBlock();
     }
 
-    /**
-     * Implement a GET Endpoint to retrieve a block by index, url: "/api/block/:index"
-     */
-    getBlockByIndex() {
+    // Get block by block Height
+    // TODO: Decode story
+    getBlockByHeight() {
         this.server.route({
             method: 'GET',
-            path: '/block/{index}',
+            path: '/height/{height}',
             handler: async (request, h) => {
                 // Get requested block
-                let index = request.params.index;
+                let height = request.params.height;
                 let response = JSON.stringify("Ooops") + '\n';
                 try {
-                    let block = await this.blocks.getBlock(index);
+                    let block = await this.blocks.getBlockByHeight(height);
+                    response = JSON.stringify(block, null, 2) + '\n';
+                } catch (err) {
+                    response = JSON.stringify(err) + '\n';
+                } finally {
+                    return response
+                }
+            }
+        });
+    }
+
+    // TODO: Get block by block Hash
+    // TODO: Decode story
+    getBlockByHash() {
+        this.server.route({
+            method: 'GET',
+            path: '/hash/{hash}',
+            handler: async (request, h) => {
+                // Get requested block
+                let hash = request.params.hash;
+                let response = JSON.stringify("Ooops") + '\n';
+                try {
+                    let block = await this.blocks.getBlockByHash(hash);
+                    response = JSON.stringify(block, null, 2) + '\n';
+                } catch (err) {
+                    response = JSON.stringify(err) + '\n';
+                } finally {
+                    return response
+                }
+            }
+        });
+    }
+
+    // TODO: Get block by wallet Address
+    // TODO: Decode story
+    getBlockByAddress() {
+        this.server.route({
+            method: 'GET',
+            path: '/address/{address}',
+            handler: async (request, h) => {
+                // Get requested block
+                let address = request.params.address;
+                let response = JSON.stringify("Ooops") + '\n';
+                try {
+                    let block = await this.blocks.getBlockByAddress(address);
                     response = JSON.stringify(block, null, 2) + '\n';
                 } catch (err) {
                     response = JSON.stringify(err) + '\n';
@@ -162,8 +208,11 @@ class BlockController {
                     if (ra == "") throw 'Expected right ascension (ra:)';
                     if (story == "") throw 'Expected a story';
                     // Verify
-                    let isValid = self.mempool.verifyAddressRequest(address);
+                    let isValid = self.mempool.verifyRequest(address);
                     if (!isValid) throw 'Request not validated';
+                    // The verified request served its purpose so delete it so
+                    // the same address can request again
+                    self.mempool.deleteVerifiedRequest(address);  // TODO: TEST
                     // Create block
                     let body = {
                         address: address,
@@ -174,6 +223,7 @@ class BlockController {
                         }
                     }
                     let newBlock = new Block(body);
+                    // Add to private blockchain
                     let addedBlock = await this.blocks.addBlock(newBlock);
                     // Decode story
                     addedBlock.body.star.storyDecoded = hex2ascii(addedBlock.body.star.story);
@@ -189,53 +239,8 @@ class BlockController {
     }
 
 
-    /**
-     * Help method to inizialized Mock dataset, adds 10 test blocks to the blocks array
-     */
-    initializeMockData() {
-        let self = this;
-        async function theLoop(myBlockChain) {
-            let genesisBlock = await myBlockChain.createGenesisBlock();
-            // console.log(genesisBlock);
-            // Get height so we can label our block-test data properly; with the height.
-            let height = await myBlockChain.getBlockHeight();
-            // Start loop at height plus 1.
-            for (let i = (height + 1); i <= (height + 5); i++) {
-                let blockTest = new Block("Test Block - " + i);
-                let addedBlock = await myBlockChain.addBlock(blockTest);
-                // console.log(addedBlock);
-            }
-            return true;
-        }
-        theLoop(this.blocks)
-            // Do it one more time just to be sure.
-            .then(() => this.blocks.validateChain())
-            .catch(err => console.log(err))
-
-    }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**

@@ -133,10 +133,24 @@ class Mempool {
     }
 
     // Verify if the request is validated.
-    verifyAddressRequest(address) {
+    verifyRequest(address) {
         if (address in this.mempoolValid) {
             let isValid = this.mempoolValid[address].registerStar;
             return isValid;
+        } else if (address in this.mempool) {
+            // Thow rather than return
+            throw 'Request not validated';
+        } else {
+            // Thow rather than return
+            throw 'Request does not exist';
+        }
+    }
+
+    // Delete a verified address from mempoolValid
+    deleteVerifiedRequest(address) {
+        if (address in this.mempoolValid) {
+            let isValid = this.mempoolValid[address].registerStar;
+            delete this.mempoolValid[address];
         } else if (address in this.mempool) {
             // Thow rather than return
             throw 'Request not validated';

@@ -3,5 +3,5 @@ curl -X POST \
     http://localhost:8000/block \
     -H "Content-Type: application/json" \
     -H 'cache-control: no-cache' \
-    -d '{"address":"1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o", "star": {"dec": "68.434252", "ra": "16.56564", "story": "Found star using https://www.google.com/sky/"
+    -d '{"address":"14sW3HAjFBZfNEbphLoWqVNyZetrW8f19R", "star": {"dec": "68.434252", "ra": "16.56564", "story": "I also found a star using https://www.google.com/sky/"
         } }'

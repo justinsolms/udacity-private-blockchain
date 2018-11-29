@@ -26,7 +26,7 @@ class Block {
 |     - createGenesisBlock()                           |
 |     - getLatestBlock()                               |
 |     - addBlock()                                     |
-|     - getBlock()                                     |
+|     - getBlockByHeight()                                     |
 |     - validateBlock()                                |
 |     - validateChain()                                |
 |  ====================================================*/
@@ -58,7 +58,7 @@ class Blockchain {
                 if (newBlock.height > 0) {
                     // Get previous block
                     let previousHeight = newBlock.height - 1
-                    let previousBlock = await self.getBlock(previousHeight)
+                    let previousBlock = await self.getBlockByHeight(previousHeight)
                     newBlock.previousBlockHash = previousBlock.hash;
                 }
                 // Block hash with SHA256 using newBlock and converting to a string.
@@ -119,7 +119,7 @@ class Blockchain {
             let block = null;
             try {
                 let height = await self.getBlockHeight();
-                block = await self.getBlock(height + 1);
+                block = await self.getBlockByHeight(height + 1);
                 return block;
             } catch (err) {
                 throw 'getLatestBlock Error: err=' + err;
@@ -129,8 +129,8 @@ class Blockchain {
         return getBlockAsysnc();
     }
 
-    // Get block.
-    getBlock(blockHeight) {
+    // Get block by block Height
+    getBlockByHeight(blockHeight) {
         let self = this
         async function getBlockAsysnc() {
             let block = null;
@@ -138,7 +138,39 @@ class Blockchain {
                 block = await self.chain.getLevelDBData(blockHeight);
                 return block;
             } catch (err) {
-                throw 'getBlock Error: err=' + err;
+                throw 'getBlockByHeight Error: err=' + err;
+            }
+        }
+        // Return a Promise from which the Block could be thenned.
+        return getBlockAsysnc();
+    }
+
+    // TODO: Get block by block Hash
+    getBlockByHash(blockHash) {
+        let self = this
+        async function getBlockAsysnc() {
+            let block = null;
+            try {
+                block = await self.chain.getBlockByHash(blockHash);
+                return block;
+            } catch (err) {
+                throw 'getBlockByHash Error: err=' + err;
+            }
+        }
+        // Return a Promise from which the Block could be thenned.
+        return getBlockAsysnc();
+    }
+
+    // TODO: Get block by wallet Address
+    getBlockByAddress(walletAddress) {
+        let self = this
+        async function getBlockAsysnc() {
+            let block = null;
+            try {
+                block = await self.chain.getBlockByAddress(walletAddress);
+                return block;
+            } catch (err) {
+                throw 'getBlockByAddress Error: err=' + err;
             }
         }
         // Return a Promise from which the Block could be thenned.
@@ -169,7 +201,7 @@ class Blockchain {
         let self = this;
         async function validateBlockAsync() {
             // get block object
-            let block = await self.getBlock(blockHeight);
+            let block = await self.getBlockByHeight(blockHeight);
             // get block hash
             let blockHash = block.hash;
             // remove block hash to test block integrity. Remember, during addBlock,
@@ -201,8 +233,8 @@ class Blockchain {
                 if (!valid) {
                     errorLog.push(i);
                 }
-                let block = await self.getBlock(i);
-                let next = await self.getBlock(i + 1);
+                let block = await self.getBlockByHeight(i);
+                let next = await self.getBlockByHeight(i + 1);
                 // compare block's hash link to previous block.
                 let blockHash = block.hash;
                 let previousHash = next.previousBlockHash;

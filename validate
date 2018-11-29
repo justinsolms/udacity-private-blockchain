@@ -4,4 +4,4 @@ curl -X POST \
 http://localhost:8000/validate \
 -H "Content-Type: application/json" \
 -H 'cache-control: no-cache' \
--d '{"address":"1G2qu3LAFUDWzapwy1fMp2FYo6yLpvWe1o","signature":"IDJea2rcDQtSSZUm/wieh8eE7kI+i/9J0WLoEIMyVXK+cyc+HOw3JBtEXiPl9aYZJIxocouM9ZI1LTHicGJ/cto="}'
+-d '{"address":"14sW3HAjFBZfNEbphLoWqVNyZetrW8f19R","signature":"IKiYlsXe7RZ40BBF17/k601ISsxkZ08tWefmOBhPIjF2MV0lSM3nCF4WHTZL/Fwxp8geGAbBwbJOAKtSoKlLgU4="}'
