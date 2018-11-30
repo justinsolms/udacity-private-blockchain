@@ -2,6 +2,9 @@
 
 Some text is copied and pasted form the rubric because of familiar word use.
 
+Code for truncated strings was copied from:
+   https://www.w3resource.com/javascript-exercises/javascript-string-exercise-16
+
 # Node.js framework
 
 The Hapi framework was chosen as it:
