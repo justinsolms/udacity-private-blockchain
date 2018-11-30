@@ -3,5 +3,5 @@ curl -X POST \
     http://localhost:8000/block \
     -H "Content-Type: application/json" \
     -H 'cache-control: no-cache' \
-    -d '{"address":"14sW3HAjFBZfNEbphLoWqVNyZetrW8f19R", "star": {"dec": "68.434252", "ra": "16.56564", "story": "I also found a star using https://www.google.com/sky/"
-        } }'
+    -d '{"address":"14sW3HAjFBZfNEbphLoWqVNyZetrW8f19R", "star": {"dec": "68.434252", "ra": "16.56564", "story": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras lobortis neque leo, id faucibus sapien mattis eget. Sed efficitur vehicula ligula, sed porttitor mi porttitor quis. Duis tortor nisi, aliquam ac varius pretium, molestie vitae sem. Cras mattis id magna laoreet blandit. Pellentesque tempus ipsum sit amet magna ultrices, nec efficitur justo commodo. Praesent porta in nunc vel dictum. Pellentesque commodo purus et interdum porta. Maecenas vulputate vulputate eros, non suscipit magna fringilla eget. Curabitur quis velit sed lectus efficitur consequat et ut metus. Phasellus id arcu ullamcorper, vestibulum arcu eget, aliquet lacus. Aliquam erat volutpat. Ut ut aliquet nulla, ut blandit mi. Ut at massa eu lectus pharetra scelerisque tristique vitae dolor. " } }'
+    

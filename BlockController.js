@@ -10,6 +10,26 @@ const {Mempool} = RequestManager;
 
 const mockStarData = require('./mockStarData.js');
 
+
+/* Truncated strings will end with a translatable ellipsis sequence ("…") (by
+   default) or specified characters. COPIED FROM:
+   https://www.w3resource.com/javascript-exercises/javascript-string-exercise-16.php
+   */
+const maxStrLength = 250
+text_truncate = function(str, length, ending) {
+    if (length == null) {
+      length = 100;
+    }
+    if (ending == null) {
+      ending = '...';
+    }
+    if (str.length > length) {
+      return str.substring(0, length - ending.length) + ending;
+    } else {
+      return str;
+    }
+  };
+
 /**
  * Controller Definition to encapsulate routes to work with blocks
  */
@@ -65,7 +85,7 @@ class BlockController {
     getBlockByHash() {
         this.server.route({
             method: 'GET',
-            path: '/hash/{hash}',
+            path: '/hash:{hash}',
             handler: async (request, h) => {
                 // Get requested block
                 let hash = request.params.hash;
@@ -92,7 +112,7 @@ class BlockController {
     getBlockByAddress() {
         this.server.route({
             method: 'GET',
-            path: '/address/{address}',
+            path: '/address:{address}',
             handler: async (request, h) => {
                 // Get requested block
                 let address = request.params.address;
@@ -155,7 +175,7 @@ class BlockController {
         let self = this;
         this.server.route({
             method: 'POST',
-            path: '/request',
+            path: '/requestValidation',
             handler: async (request, h) => {
                 let response = JSON.stringify("Ooops") + '\n';  // Scope!!
                 // Get posted wallet address.
@@ -222,6 +242,8 @@ class BlockController {
                     let dec = star.dec;
                     let ra = star.ra;
                     let story = star.story;
+                    // Limit story to 250 words (500 bytes) including ellipses
+                    story = text_truncate(story, maxStrLength);
                     // Check
                     if (address == "") throw 'Expected address';
                     if (star == "") throw 'Expected star';

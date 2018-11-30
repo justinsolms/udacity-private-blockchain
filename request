@@ -1,7 +1,7 @@
 #!/bin/bash
 ADDRESS=$1
 curl -X POST \
-    http://localhost:8000/request \
+    http://localhost:8000/requestValidation \
     -H "Content-Type: application/json" \
     -H 'cache-control: no-cache' \
     -d '{"address":"14sW3HAjFBZfNEbphLoWqVNyZetrW8f19R"}'
