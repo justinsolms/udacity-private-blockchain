@@ -35,7 +35,6 @@ class BlockController {
     }
 
     // Get block by block Height
-    // TODO: Decode story
     getBlockByHeight() {
         this.server.route({
             method: 'GET',
@@ -46,8 +45,14 @@ class BlockController {
                 let response = JSON.stringify("Ooops") + '\n';
                 try {
                     let block = await this.blocks.getBlockByHeight(height);
+                    // Decode story
+                    if (block.body.star) {
+                        block.body.star.storyDecoded = hex2ascii(block.body.star.story);
+                    }
+                    // Respond
                     response = JSON.stringify(block, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 } finally {
                     return response
@@ -56,8 +61,7 @@ class BlockController {
         });
     }
 
-    // TODO: Get block by block Hash
-    // TODO: Decode story
+    // Get block by block Hash
     getBlockByHash() {
         this.server.route({
             method: 'GET',
@@ -68,8 +72,14 @@ class BlockController {
                 let response = JSON.stringify("Ooops") + '\n';
                 try {
                     let block = await this.blocks.getBlockByHash(hash);
+                    // Decode story
+                    if (block.body.star) {
+                        block.body.star.storyDecoded = hex2ascii(block.body.star.story);
+                    }
+                    // Respond
                     response = JSON.stringify(block, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 } finally {
                     return response
@@ -78,8 +88,7 @@ class BlockController {
         });
     }
 
-    // TODO: Get block by wallet Address
-    // TODO: Decode story
+    // Get block by wallet Address
     getBlockByAddress() {
         this.server.route({
             method: 'GET',
@@ -89,9 +98,18 @@ class BlockController {
                 let address = request.params.address;
                 let response = JSON.stringify("Ooops") + '\n';
                 try {
-                    let block = await this.blocks.getBlockByAddress(address);
-                    response = JSON.stringify(block, null, 2) + '\n';
+                    // FIXME: Deal with array of blocks.
+                    let blocksArray = await this.blocks.getBlockByAddress(address);
+                    // Decode story
+                    for (let block of blocksArray) {
+                        if (block.body.star) {
+                            block.body.star.storyDecoded = hex2ascii(block.body.star.story);
+                        }
+                    }
+                    // Respond
+                    response = JSON.stringify(blocksArray, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 } finally {
                     return response
@@ -123,6 +141,7 @@ class BlockController {
                     // Respond
                     response = JSON.stringify(addedBlock, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 } finally {
                     return response
@@ -151,6 +170,7 @@ class BlockController {
                     // Respond
                     response = JSON.stringify(requestObject, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 }
                 return response
@@ -178,6 +198,7 @@ class BlockController {
                     // Respond
                     response = JSON.stringify(validRequest, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 }
                 return response
@@ -212,7 +233,7 @@ class BlockController {
                     if (!isValid) throw 'Request not validated';
                     // The verified request served its purpose so delete it so
                     // the same address can request again
-                    self.mempool.deleteVerifiedRequest(address);  // TODO: TEST
+                    self.mempool.deleteVerifiedRequest(address);
                     // Create block
                     let body = {
                         address: address,
@@ -230,6 +251,7 @@ class BlockController {
                     // Respond
                     response = JSON.stringify(addedBlock, null, 2) + '\n';
                 } catch (err) {
+                    console.log(err);
                     response = JSON.stringify(err) + '\n';
                 }
                 return response

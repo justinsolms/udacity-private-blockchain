@@ -55,10 +55,13 @@ function initializeMockData(blockController) {
         // console.log(genesisBlock);
         // Get height so we can label our block-test data properly; with the height.
         let height = await blockChain.getBlockHeight();
+        console.log(height);
         // Start loop at height plus 1.
-        for (let i = (height + 1); i <= (height + 5); i++) {
-            data = starData[i - 1];
-            data.star.story = "Mock star number #" + i
+        for (let i = 0; i < 5; i++) {
+            data = starData[i];
+            story = "Mock star number #" + (height + i + 1);
+            console.log(story);
+            data.star.story = Buffer(story).toString('hex');
             let blockTest = new Block(data);
             let addedBlock = await blockChain.addBlock(blockTest);
             // console.log(addedBlock);

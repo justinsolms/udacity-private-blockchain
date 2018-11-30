@@ -114,7 +114,7 @@ class LevelSandbox {
             self.db.createReadStream()
                 .on('data', function(data) {
                     if (data.value.hash === hash) {
-                        block = data;
+                        block = data.value;
                     }
                 })
                 .on('error', function(err) {
@@ -134,7 +134,7 @@ class LevelSandbox {
             self.db.createReadStream()
                 .on('data', function(data) {
                     if (data.value.body.address === address) {
-                        block.push(data);
+                        block.push(data.value);
                     }
                 })
                 .on('error', function(err) {

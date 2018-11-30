@@ -145,7 +145,7 @@ class Blockchain {
         return getBlockAsysnc();
     }
 
-    // TODO: Get block by block Hash
+    // Get block by block Hash
     getBlockByHash(blockHash) {
         let self = this
         async function getBlockAsysnc() {
@@ -161,7 +161,7 @@ class Blockchain {
         return getBlockAsysnc();
     }
 
-    // TODO: Get block by wallet Address
+    // Get block by wallet Address
     getBlockByAddress(walletAddress) {
         let self = this
         async function getBlockAsysnc() {
